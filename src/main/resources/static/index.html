@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/index.css">
+    <title>游戏大厅</title>
+</head>
+<body>
+<div id="indexmain">
+    <div id="fm" class="container" v-show="blackuser.id==undefined">
+        <div class="section">
+            <h2>用户信息展示</h2>
+            <div class="user-info">
+                <img src="../imgs/df.jpg" width="70px">
+                <div>
+                    <p>昵称：{{user.nickName}}</p>
+                    <p>等级：Lv.{{user.level}}</p>
+                    <p>积分：{{user.score}}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>在线玩家列表</h2>
+            <div v-for="u in onlineusers" class="player">
+                <img src="../imgs/df.jpg" alt="Avatar">
+                <div>
+                    <p>玩家名：{{u.nickName}}</p>
+                    <p>性别：{{u.sex}}</p>
+                    <p>等级：Lv.{{u.level}}</p>
+                    <button v-if="user.id!=u.id" @click="yaoqing(u.id,u.nickName)">邀请</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>对战列表</h2>
+            <div v-for="p in pks" class="player">
+                <div>桌号：{{p.id}} |</div>
+                <p>{{p.uid1Nickname}} vs {{!p.uid2Nickname ? '待加入' : p.uid2Nickname}}</p>
+            </div>
+        </div>
+
+        <div class="yaoqing">
+            <ul>
+                <li v-for="(yq,index) in yqs">
+                    {{yq.nickName}}邀请你进行对局，<br>
+                    <button @click="accept(index,yq.nickName)">接受</button>
+                    <button @click="reject(index)">拒绝</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!--棋盘-->
+    <div v-show="blackuser.id!=undefined" id="app">
+        <div id="app-main">
+            <div id="table" style="">
+                <div id="table-wrap">
+                    <div id="table-title">
+                        <div id="table-title-left">
+    						<span>
+    							桌号{{pkid}}
+    						</span>
+                        </div>
+
+                    </div>
+                    <div id="table-main-area">
+                        <div id="border">
+                            <div v-for="row in 15">
+                                <div v-for="col in 15">
+                                    <i :id="'s'+(row-1)+'-'+(col-1)" class="" @click="putstone(row-1,col-1)"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="table-msgbox" style="display: none;">
+                            <div id="table-msgbox-val">
+                            </div>
+                            <div id="table-msgbox-btbox">
+                                <!---->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="table-right-area">
+                        <div id="tbr-top">
+                            <div id="tbr-user2name">
+                                <div id="tbr-user1">
+                                    <span id="tbr-user1-left" v-if="blackuser.id==user.id">你</span>
+                                    <span class="tbr-user-style">
+                                        {{blackuser.id != undefined ? blackuser.nickName : ''}}
+                                    </span>
+                                    <span class="stone-left tbr-black-stone">
+    								</span>
+                                </div>
+                                <div id="tbr-user1">
+                                    <span id="tbr-user1-left" v-if="whiteuser.id==user.id">你</span>
+                                    <span class="tbr-user-style">
+                                        {{whiteuser.id != undefined ? whiteuser.nickName : '等待中...'}}
+    								</span>
+                                    <span class="stone-right tbr-white-stone">
+    								</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tbr-quick-select">
+                            <div id="ask-peace">
+                                <button  @click="PkPease">
+                                    求和
+                                </button>
+                                <button disabled="">
+                                    认输
+                                </button>
+                            </div>
+                        </div>
+                        <div id="tbr-option">
+                            <div id="tbr-option-menu">
+    							<span class="opt-select-style opt-select">
+    								消息
+    							</span>
+                                <span class="opt-select-style">
+    								观战(0)
+    							</span>
+                            </div>
+                            <div id="tbr-option-area">
+
+                                <div id="tbr-im" style="display: none;">
+                                    <div id="tbr-im-wrap">
+                                        <div id="tbr-im-msg">
+                                            <div style="text-align: center; color: gray; font-size: 12px;">
+                                                提示：信息仅对局双方可见
+                                                <br>
+                                                启用聊天功能需要桌主
+                                                <b style="cursor: pointer; text-decoration: underline;">
+                                                    设置桌位密码
+                                                </b>
+                                            </div>
+                                        </div>
+                                        <div id="tbr-im-ip">
+                                            <input placeholder="Enter 发送信息" type="text">
+                                            <button>
+                                                发送
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="tbr-witness-list" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tbr-bottom-bt-wrap">
+                            <div class="tbr-bottom-bt" @click="PkExit">
+                                退出
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--主页-->
+
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+<script src="js/checkwin.js"></script>
+<script>
+    var url = location.href;
+    var i = url.lastIndexOf('=');
+    var id = i == -1 ? -1 : url.substr(i + 1);//获取url中id的值
+    const vm = new Vue({
+        el: "#indexmain",
+        data: {
+            user: {},//当前用户
+            onlineusers: [],//在线用户
+            pks: [],//对局列表
+            yqs: [],//邀请信息
+            blackuser: {},//黑选手
+            whiteuser: {},//白选手
+            qipan: [],//棋盘
+            pkid: -1,//对局id
+            myturn: false, //是否轮到我下棋了
+            over:false,//棋局结束
+            exit:false //一方选择退出后关闭房间
+        },
+        methods: {
+            //获取个人信息 JSON
+            getMyInfo() {
+                if (id == -1) {
+                    alert("请先登录");
+                    location.href = 'login.html';
+                    return;
+                }
+                axios.get('/onlines/myinfo?id=' + id).then(resp => {
+                    if (!resp.data) {
+                        //说明当前用户未登录
+                        //让他去登录
+                        alert("请先登录");
+                        location.href = 'login.html'
+                    } else {
+                        //将响应的数据赋值给变量
+                        this.user = resp.data;
+                    }
+                })
+            },
+            //获取所有在线用户
+            getOnlines() {
+                axios.get('/onlines/onlines?id=' + id).then(resp => {
+                    this.onlineusers = resp.data.users;//响应数据为所有的在线用户
+                    this.pks = resp.data.pks;
+                    this.yqs = resp.data.yqs.concat(this.yqs);
+                    if (this.whiteuser.id == undefined && resp.data.whiteuser) {
+                        this.whiteuser = resp.data.whiteuser;
+                        this.myturn = true;
+                    }
+                    //页面显示对方棋子
+                    if (resp.data.xy != undefined) {
+                        var x = resp.data.xy.split(",")[0];
+                        var y = resp.data.xy.split(",")[1];
+                        if (this.blackuser.id == this.user.id) {//我是黑，那么对方的就是白
+                            this.qipan[x][y] = 'w';
+                            document.querySelector('#s' + x + '-' + y).className = 'white-stone';
+                        } else {
+                            this.qipan[x][y] = 'b';
+                            document.querySelector('#s' + x + '-' + y).className = 'black-stone';
+                        }
+                        this.myturn = true;
+                    }
+                    //我输了
+                    if (resp.data.fail == 1) {
+                        this.myturn = false;
+                        this.over=true;
+                        setTimeout(() => alert("你已经输了！"), 300)
+                    }
+                    //求和
+                    if(resp.data.he==1){
+                        const b = confirm("对方发出求和申请，是否同意");
+                        const  otherid = this.user.id==this.blackuser.id? this.whiteuser.id:this.blackuser.id;
+                        if(!b){
+                            axios.get('/play/jvjue?otherid='+otherid).then(resp=>{
+                                console.log(resp.data);
+                            })
+                        }else{
+                            //同意求和
+                            this.myturn = false;
+                            axios.get('/play/tongyi?otherid='+otherid+'&pkid='+this.pkid).then(resp=>{
+                                console.log(resp.data);
+                                this.over = true;
+                            })
+                        }
+                    }
+                    if(resp.data.he==3){
+                        setTimeout(()=>alert("对方拒绝你的求和申请，对局继续"),300)
+                    }
+
+                    if(resp.data.he==2){
+                        this.myturn = false;
+                        this.over = true;
+                        setTimeout(()=>alert("对方同意你的求和信息，对局结束"),300)
+                    }
+                    //房间关闭
+                    if(this.exit){
+                        this.blackuser= {};//黑选手
+                        this.whiteuser= {};//白选手
+                        this.qipan= [];//棋盘
+                        this.pkid= -1;//对局id
+                        this.exit=false;
+                        this.over=false;
+                    }
+
+                })
+            },
+
+
+            yaoqing(otherid, nickName) {
+                this.blackuser = this.user;
+                axios.get('/onlines/yaoqing?id=' + id + '&otherid=' + otherid + '&nickname=' + nickName).then(resp => {
+                    //将响应的桌号赋值给pkid
+                    this.pkid = resp.data;
+
+                    this.initQiPan();
+                })
+            },
+            initQiPan() {
+                for (var i = 0; i < 15; i++) {
+                    var r = [];
+                    for (var j = 0; j < 15; j++) {
+                        r.push('');
+                    }
+                    this.qipan.push(r);
+                }
+            },
+            reject(index) {
+                this.yqs.splice(index, 1);//删除该条记录
+            },
+            //接受他人邀请
+            accept(index, nickName) {
+                var u = this.yqs[index];//拿到邀请信息
+                this.yqs.splice(index, 1);//删除该条记录；
+
+                //接受邀请：id：我的id，被邀请人；  otherid: 别人，邀请人id;
+                axios.get('/onlines/jieshou?id=' + id + '&otherid=' + u.id + '&nickname=' + nickName).then(resp => {
+                    if (!resp.data.pk) {
+                        alert("接受失败，该桌已关闭！")
+                    } else {
+                        this.initQiPan();//初始化棋盘
+                        this.blackuser = resp.data.blackuser;//桌主信息
+                        this.whiteuser = this.user;//白棋选手为自己
+                        this.pkid = resp.data.pk.id;//接受邀请，赋值pkid
+                    }
+                })
+            },
+            putstone(row, col) {
+                if (this.myturn == false) {
+                    return;
+                }
+                if (this.qipan[row][col] != '') {
+                    return;
+                }
+                //将第row行，第col列的数组位置设置上值
+                if (this.blackuser.id == this.user.id) {
+                    this.qipan[row][col] = 'b';//黑
+                    document.querySelector('#s' + row + '-' + col).className = 'black-stone';
+                } else {
+                    this.qipan[row][col] = 'w';//白
+                    document.querySelector('#s' + row + '-' + col).className = 'white-stone';
+                }
+                this.myturn = false;//落子之后，等待对方下棋，myturn为false
+                //发起axios，将落子信息传递到后台servlet
+                var win = checkWin(this.qipan);//输赢判定 true / false
+                axios.get("/play/putstone?x=" + row + "&y="
+                    + col + "&pkid=" + this.pkid + "&color=" + this.qipan[row][col] + "&win=" + win).then(resp => {
+                })
+                //弹窗提醒
+                if (win) {
+                    this.over=true;
+                    setTimeout(() => alert("恭喜你，你赢了！"), 500)
+                }
+            },
+
+            PkExit(){
+                if(!this.over){
+                    alert("棋局进行中，不能退出")
+                    return;
+                }
+                axios.get('/play/exit?pkid='+this.pkid).then(resp => {
+                    this.exit=true;
+                    var si =[...document.querySelectorAll('#border1')];
+                    si.forEach(e=>e,className='');
+                    console.log(resp.data);
+                })
+
+
+            },
+
+            PkPease(){
+                let otherid=this.user.id==this.blackuser.id?
+                            this.whiteuser.id:this.blackuser.id;
+                //otherid: 别人，邀请人id;
+                axios.get('/play/qiuhe?otherid=' + otherid ).then(resp => {
+                    console.log(resp.data);
+                })
+            }
+
+        },
+        created() {
+            this.getMyInfo();
+            //心跳轮询
+            setInterval(this.getOnlines, 1000);
+
+        }
+    });
+</script>
+
+</body>
+</html>

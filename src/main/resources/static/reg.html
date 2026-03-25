@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>注册页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<form id="fm">
+    <h2>用户注册</h2>
+    <input type="text" placeholder="用户名" v-model="user.username">
+    <input type="password" placeholder="密码" v-model="user.password">
+    <select v-model="user.sex">
+        <option value="男">男</option>
+        <option value="女">女</option>
+    </select>
+    <input type="text" placeholder="昵称" v-model="user.nickName">
+    <button type="button" @click="register">注册</button>
+
+</form>
+
+
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+
+<script>
+    new Vue({
+        el:'#fm',
+        data:{
+            user:{}
+        },
+        methods:{
+//点击按钮方法
+            register(){
+                axios.post('/user/register',this.user).then(res => {
+                    if(res.data == 1){
+                        alert("注册成功");
+                    }else if(res.data==-1){
+                        alert("该用户名已占用，请修改后重新注册");
+                    }else{
+                        alert("注册失败，系统错误");
+                    }
+                });
+            }
+        },
+    })
+
+</script>
+
+</body>
+</html>

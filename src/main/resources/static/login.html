@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html >
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+        form {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<form id="fm" @submit.prevent="mysubmit">
+    <h2>用户登录</h2>
+    <input type="text" placeholder="用户名" required v-model="username">
+    <input type="password" placeholder="密码" required v-model="password">
+    <button type="submit">登录</button>
+</form>
+
+<div>没有账号，去<a href="reg.html">注册</a></div>
+<!--vue: 页面和data数据的关联-->
+<!--axios：data数据与servlet 【请求响应】-->
+<script src="js/vue.min.js"></script>
+<script src="js/axios.min.js"></script>
+
+
+<script>
+    const vm = new Vue({
+        el: "#fm",
+        data: {
+            username: "",
+            password: ""
+        },
+        methods: {
+            mysubmit() {
+                if(this.password=='' || this.username==''){
+                    return;
+                }
+                axios.get('/user/login', {
+                    params: {
+                        username: this.username,
+                        password: this.password,
+                    }
+                }).then(function (resp) {
+                    if (!resp.data) {
+                        alert("用户名或密码错误")
+                    }else{
+                        alert("登录成功！")
+                        location.href='index.html?id='+resp.data.id;
+                    }
+                })
+            },
+        },
+    });
+</script>
+
+
+
+
+</body>
+</html>
